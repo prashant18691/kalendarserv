@@ -1,4 +1,4 @@
-package com.prs.kalendar.kalendarserv.exception;
+package com.prs.kalendar.kalendarserv.exception.custom;
 
 public class UserExistsException extends RuntimeException {
     public UserExistsException(String message) {

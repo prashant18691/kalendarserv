@@ -1,5 +1,7 @@
 package com.prs.kalendar.kalendarserv.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.prs.kalendar.kalendarserv.util.CommonUtils;
 import com.prs.kalendar.kalendarserv.validators.PresentOrFuture;
 import org.springframework.hateoas.RepresentationModel;
@@ -12,8 +14,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Validated
+@JsonPropertyOrder({
+        "slot_id",
+        "slot_date_time"
+})
 public class SlotVO extends RepresentationModel<SlotVO> {
+    @JsonProperty("slot_id")
     private UUID slotId;
+    @JsonProperty("slot_date_time")
     @NotBlank
     @PresentOrFuture
     @Pattern(regexp = "^((0[1-9])|([12][0-9])|(3[01]))/((0[1-9])|1[012])/\\d\\d\\d\\d ((((0[1-9])|(1[0-9])|(2[0-3])):[0-5][0-9])|24:00)$")

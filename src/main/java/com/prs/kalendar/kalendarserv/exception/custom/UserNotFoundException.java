@@ -1,4 +1,4 @@
-package com.prs.kalendar.kalendarserv.exception;
+package com.prs.kalendar.kalendarserv.exception.custom;
 
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(String message) {

@@ -1,7 +1,7 @@
 package com.prs.kalendar.kalendarserv.util;
 
-import com.prs.kalendar.kalendarserv.exception.InvalidDateException;
-import com.prs.kalendar.kalendarserv.exception.PastDateTimeException;
+import com.prs.kalendar.kalendarserv.exception.custom.InvalidDateException;
+import com.prs.kalendar.kalendarserv.exception.custom.PastDateTimeException;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;

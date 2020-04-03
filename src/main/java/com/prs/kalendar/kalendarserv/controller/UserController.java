@@ -1,6 +1,5 @@
 package com.prs.kalendar.kalendarserv.controller;
 
-import com.prs.kalendar.kalendarserv.model.SlotVO;
 import com.prs.kalendar.kalendarserv.model.UserVO;
 import com.prs.kalendar.kalendarserv.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +10,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
-import java.util.Set;
+import java.util.UUID;
 
+import static com.prs.kalendar.kalendarserv.helper.LinkHelper.*;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController
@@ -25,28 +25,33 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<UserVO> registerUser(@Valid @RequestBody UserVO userVO){
         UserVO savedUser = userService.save(userVO);
-        Link link = linkTo(UserController.class).slash(savedUser.getEmailId()).withSelfRel();
-        userVO.add(link);
-        URI uri = ServletUriComponentsBuilder.fromCurrentContextPath().path("users").path("/{emailId}").buildAndExpand(savedUser.getEmailId()).toUri();
+        Link idLink = getUserIdLink(userVO.getId());
+        Link emailIdLink = getEmailLink(userVO.getEmailId());
+        Link addSlotsLinkById = getaddSlotsByIdLink(userVO.getId());
+        Link addSlotsLinkByEmail = getaddSlotsByEmailLink(userVO.getEmailId());
+        userVO.add(idLink);
+        userVO.add(emailIdLink);
+        userVO.add(addSlotsLinkById);
+        userVO.add(addSlotsLinkByEmail);
+        URI uri = ServletUriComponentsBuilder.fromCurrentContextPath().path("users").path("id/{id}").buildAndExpand(savedUser.getId()).toUri();
         return ResponseEntity.created(uri).body(savedUser);
     }
 
-    @PostMapping("/{emailId}")
-    public ResponseEntity<UserVO> addSlotsForUser(@PathVariable ("emailId") String emailId, @RequestBody Set<@Valid SlotVO> slotVOS){
-        UserVO userVO = userService.addSlotsToUser(emailId, slotVOS);
-        Link userlink = linkTo(UserController.class).slash(userVO.getEmailId()).withSelfRel();
-        userVO.add(userlink);
-        return ResponseEntity.ok().body(userVO);
-    }
-
-    @GetMapping("/{emailId}")
-    public ResponseEntity<UserVO> getUserById(@PathVariable ("emailId") String emailId){
+    @GetMapping("/email/{emailId}")
+    public ResponseEntity<UserVO> getUserByEmailId(@PathVariable ("emailId") String emailId){
         UserVO userVO = userService.findByEmailId(emailId);
-        Link selfLink = linkTo(UserController.class).slash(userVO.getEmailId()).withSelfRel();
-        userVO.add(selfLink);
+        Link idLink = getUserIdLink(userVO.getId());
+        userVO.add(idLink);
         return ResponseEntity.ok(userVO);
     }
 
+    @GetMapping("/id/{id}")
+    public ResponseEntity<UserVO> getUserById(@PathVariable ("id") UUID id){
+        UserVO userVO = userService.findByUserId(id);
+        Link emailIdLink = getEmailLink(userVO.getEmailId());
+        userVO.add(emailIdLink);
+        return ResponseEntity.ok(userVO);
+    }
 
    /* @GetMapping("/{userId}/slots/{slotId}")
     public ResponseEntity<SlotVO> getSlotsById(@PathVariable("userId") UUID userId,

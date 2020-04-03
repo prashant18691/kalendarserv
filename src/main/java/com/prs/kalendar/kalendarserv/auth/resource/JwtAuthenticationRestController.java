@@ -1,7 +1,7 @@
 package com.prs.kalendar.kalendarserv.auth.resource;
 
 import com.prs.kalendar.kalendarserv.auth.service.JwtTokenUtil;
-import com.prs.kalendar.kalendarserv.exception.AuthenticationException;
+import com.prs.kalendar.kalendarserv.exception.custom.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;

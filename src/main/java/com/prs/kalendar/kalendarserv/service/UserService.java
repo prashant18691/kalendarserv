@@ -1,11 +1,9 @@
 package com.prs.kalendar.kalendarserv.service;
 
 import com.prs.kalendar.kalendarserv.dao.UserRepository;
-import com.prs.kalendar.kalendarserv.entity.Slot;
 import com.prs.kalendar.kalendarserv.entity.Users;
-import com.prs.kalendar.kalendarserv.exception.SlotExistsException;
-import com.prs.kalendar.kalendarserv.exception.UserExistsException;
-import com.prs.kalendar.kalendarserv.exception.UserNotFoundException;
+import com.prs.kalendar.kalendarserv.exception.custom.UserExistsException;
+import com.prs.kalendar.kalendarserv.exception.custom.UserNotFoundException;
 import com.prs.kalendar.kalendarserv.model.SlotVO;
 import com.prs.kalendar.kalendarserv.model.UserVO;
 import org.springframework.beans.BeanUtils;
@@ -16,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+
+import static com.prs.kalendar.kalendarserv.helper.CopyHelper.copySlotsToVO;
 
 @Service
 public class UserService {
@@ -29,8 +29,8 @@ public class UserService {
     public UserVO save(UserVO userVO)
     {
         Users user = new Users();
-        BeanUtils.copyProperties(userVO,user);
-        user.setPassword(passwordEncoder.encode(user.getEmailId()));
+        BeanUtils.copyProperties(userVO,user,"slots");
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         try {
             userRepository.save(user);
         }
@@ -38,9 +38,6 @@ public class UserService {
             throw new UserExistsException("A user with email id "+userVO.getEmailId()+" already present");
         }
         userVO.setId(user.getId());
-        Set<SlotVO> slotSet = new HashSet<>();
-        copySlotsToVO(user.getSlots(),slotSet);
-        userVO.setSlotVOs(slotSet);
         return userVO;
     }
 
@@ -51,9 +48,11 @@ public class UserService {
         Set<SlotVO> slotSet = null;
         for (Users user:userList){
             userVO = new UserVO();
+            BeanUtils.copyProperties(user,userVO,"slots");
+            if (CollectionUtils.isEmpty(user.getSlots()))
+                continue;
             slotSet = new HashSet<>();
-            BeanUtils.copyProperties(user,userVO);
-            userVO.setSlotVOs(slotSet);
+            userVO.setSlots(slotSet);
             copySlotsToVO(user.getSlots(),slotSet);
             userVOList.add(userVO);
         }
@@ -66,9 +65,11 @@ public class UserService {
             throw new UserNotFoundException("No user found with id: "+userId);
         }
         UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user.get(),userVO,"slots");
+        if (CollectionUtils.isEmpty(user.get().getSlots()))
+            return userVO;
         Set<SlotVO> slotSet = new HashSet<>();
-        BeanUtils.copyProperties(user.get(),userVO);
-        userVO.setSlotVOs(slotSet);
+        userVO.setSlots(slotSet);
         copySlotsToVO(user.get().getSlots(),slotSet);
         return userVO;
     }
@@ -79,48 +80,13 @@ public class UserService {
             throw new UserNotFoundException("No user found with email id: "+emailId);
         }
         UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user,userVO,"slots");
+        if (CollectionUtils.isEmpty(user.getSlots()))
+            return userVO;
         Set<SlotVO> slotSet = new HashSet<>();
-        BeanUtils.copyProperties(user,userVO);
-        userVO.setSlotVOs(slotSet);
+        userVO.setSlots(slotSet);
         copySlotsToVO(user.getSlots(),slotSet);
         return userVO;
     }
 
-    public UserVO addSlotsToUser(String emailId, Set<SlotVO> slotVOs){
-        Users user = userRepository.findByEmailId(emailId);
-        if (user==null){
-            throw new UserNotFoundException("No user found with email Id: "+emailId);
-        }
-        Set<Slot> slots = user.getSlots();
-        if (CollectionUtils.isEmpty(slots))
-            slots = new HashSet<>();
-        user.setSlots(slots);
-        copySlotsVOtoSlots(slotVOs, slots);
-        try {
-            userRepository.save(user);
-        }
-        catch (DataIntegrityViolationException e){
-            throw new SlotExistsException("Entered slots are already available for user with email id "+emailId);
-        }
-        UserVO userVO = new UserVO();
-        Set<SlotVO> slotSet = new HashSet<>();
-        userVO.setSlotVOs(slotSet);
-
-        BeanUtils.copyProperties(user,userVO,"slots");
-        copySlotsToVO(slots,slotSet);
-        return userVO;
-    }
-
-    private void copySlotsVOtoSlots(Set<SlotVO> slotVOs, Set<Slot> slots) {
-        for(SlotVO slotVO : slotVOs){
-            slots.add(new Slot(slotVO.getSlotDateTime()));
-        }
-    }
-
-    private void copySlotsToVO(Set<Slot> slots, Set<SlotVO> slotSet) {
-        for (Slot eachSlot: slots){
-            SlotVO slotVO = new SlotVO(eachSlot.getSlotId(),eachSlot.getSlotDateTime());
-            slotSet.add(slotVO);
-        }
-    }
 }
