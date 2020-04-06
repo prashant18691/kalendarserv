@@ -100,7 +100,7 @@ public class SlotsService {
             slotsBookedRepository.save(slotsBooked);
             slotBookedVO = new SlotBookedVO();
             copySlotsBookedToSlotBookedVO(slotsBooked,slotBookedVO);
-            new Thread(()-> GoogleNotifications.send(slotBookedVO)).start();
+//            new Thread(()-> GoogleNotifications.send(slotBookedVO)).start();
         }
         catch (DataIntegrityViolationException e){
             throw new SlotBookingException("Error while booking slot : "+slotId);
