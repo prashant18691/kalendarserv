@@ -10,18 +10,18 @@ import com.prs.kalendar.kalendarserv.exception.custom.SlotBookingException;
 import com.prs.kalendar.kalendarserv.exception.custom.SlotExistsException;
 import com.prs.kalendar.kalendarserv.exception.custom.SlotNotAvailableException;
 import com.prs.kalendar.kalendarserv.exception.custom.UserNotFoundException;
-import com.prs.kalendar.kalendarserv.googlecalsync.GoogleNotifications;
 import com.prs.kalendar.kalendarserv.model.SlotBookedVO;
 import com.prs.kalendar.kalendarserv.model.SlotVO;
 import com.prs.kalendar.kalendarserv.model.UserVO;
 import com.prs.kalendar.kalendarserv.request.BookSlotRequest;
+import com.prs.kalendar.kalendarserv.util.CommonUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -75,8 +75,9 @@ public class SlotsService {
     public Set<SlotVO> findSlotsByEmailAndDate(String email, String date){
         Users users = userRepository.findByEmailId(email);
         Set<Slot> slots = users.getSlots();
-        slots = slots.stream().filter(k -> k.getStartDateTime().after(new Timestamp(System.currentTimeMillis()))
-                && k.getIsBooked() == 'N').collect(Collectors.toSet());
+        slots = slots.stream().filter(k -> k.getIsBooked() == 'N' &&
+                DateUtils.isSameDay(CommonUtils.getTimeStampToDate(k.getStartDateTime()),CommonUtils.getDateFromStr(date))
+        ).collect(Collectors.toSet());
         if (CollectionUtils.isEmpty(slots))
             throw new SlotNotAvailableException("No slots are available for given search criteria");
         Set<SlotVO> slotVOS = new HashSet<>();
@@ -100,7 +101,7 @@ public class SlotsService {
             slotsBookedRepository.save(slotsBooked);
             slotBookedVO = new SlotBookedVO();
             copySlotsBookedToSlotBookedVO(slotsBooked,slotBookedVO);
-//            new Thread(()-> GoogleNotifications.send(slotBookedVO)).start();
+// new Thread(()-> GoogleNotifications.send(slotBookedVO)).start();
         }
         catch (DataIntegrityViolationException e){
             throw new SlotBookingException("Error while booking slot : "+slotId);
