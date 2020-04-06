@@ -2,6 +2,7 @@ package com.prs.kalendar.kalendarserv.controller;
 
 import com.prs.kalendar.kalendarserv.model.UserVO;
 import com.prs.kalendar.kalendarserv.service.UserService;
+import com.prs.kalendar.kalendarserv.util.CommonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.net.URI;
 import java.util.UUID;
 
@@ -38,7 +42,7 @@ public class UserController {
     }
 
     @GetMapping("/email/{emailId}")
-    public ResponseEntity<UserVO> getUserByEmailId(@PathVariable ("emailId") String emailId){
+    public ResponseEntity<UserVO> getUserByEmailId(@PathVariable ("emailId") @NotBlank @Pattern(regexp = CommonUtils.EMAIL_REGEX) String emailId){
         UserVO userVO = userService.findByEmailId(emailId);
         Link idLink = getUserIdLink(userVO.getId());
         userVO.add(idLink);
@@ -46,22 +50,11 @@ public class UserController {
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<UserVO> getUserById(@PathVariable ("id") UUID id){
+    public ResponseEntity<UserVO> getUserById(@PathVariable ("id") @NotNull UUID id){
         UserVO userVO = userService.findByUserId(id);
         Link emailIdLink = getEmailLink(userVO.getEmailId());
         userVO.add(emailIdLink);
         return ResponseEntity.ok(userVO);
     }
 
-   /* @GetMapping("/{userId}/slots/{slotId}")
-    public ResponseEntity<SlotVO> getSlotsById(@PathVariable("userId") UUID userId,
-                                                       @PathVariable("slotId") UUID slotId){
-        UserVO userVO = userService.findByUserId(userId);
-        Optional<SlotVO> slotOpt = userVO.getSlotVOs().stream().filter(slotVO -> slotId.equals
-                (slotVO.getSlotId())).findAny();
-        if (!slotOpt.isPresent()){
-
-        }
-        return ResponseEntity.ok(slotVOs.);
-    }*/
 }

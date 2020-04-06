@@ -27,7 +27,7 @@ public class PresentOrFutureValidator
 
         LocalDateTime now = LocalDateTime.now();
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         LocalDateTime dateTime = LocalDateTime.parse(value);
 
         return !dateTime.isBefore(now) || dateTime.isAfter(now);

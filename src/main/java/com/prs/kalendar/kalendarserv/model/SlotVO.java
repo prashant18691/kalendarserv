@@ -62,7 +62,6 @@ public class SlotVO extends RepresentationModel<SlotVO> {
     }
 
     public void setSlotDateTime(String slotDateTime) {
-        if (!CommonUtils.checkPastDate(slotDateTime))
             this.slotDateTime=slotDateTime;
     }
 }

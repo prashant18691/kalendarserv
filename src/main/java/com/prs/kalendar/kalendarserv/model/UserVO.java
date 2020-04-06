@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.prs.kalendar.kalendarserv.util.CommonUtils;
 import org.springframework.hateoas.RepresentationModel;
 
 import javax.validation.constraints.NotBlank;
@@ -33,10 +34,7 @@ public class UserVO  extends RepresentationModel<UserVO> {
     private String password;
     @JsonProperty("email_id")
     @NotBlank
-    @Pattern(regexp = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\."
-            + "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
-            + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z0-9]"
-            + "(?:[A-Za-z0-9-]*[A-Za-z0-9])?")
+    @Pattern(regexp = CommonUtils.EMAIL_REGEX)
     private String emailId;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Set<SlotVO> slots;

@@ -78,6 +78,7 @@ public class JWTWebSecurityConfig extends WebSecurityConfigurerAdapter {
                         HttpMethod.POST,
                         authenticationPath
                 ).antMatchers(HttpMethod.POST, "/users/register")
+                .antMatchers(HttpMethod.GET,"/Callback")
                 .antMatchers(HttpMethod.OPTIONS, "/**")
                 .and()
                 .ignoring()

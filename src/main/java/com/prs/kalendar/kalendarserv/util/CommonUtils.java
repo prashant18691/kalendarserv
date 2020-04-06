@@ -2,21 +2,37 @@ package com.prs.kalendar.kalendarserv.util;
 
 import com.prs.kalendar.kalendarserv.exception.custom.InvalidDateException;
 import com.prs.kalendar.kalendarserv.exception.custom.PastDateTimeException;
+import org.apache.commons.lang3.time.DateUtils;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 public class CommonUtils {
 
+    //yyyy-MM-dd'T'HH:mm:ssZ
+    /*Date date = new Date();
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    String dateAsISOString = df.format(date);*/
 
-    private static final String PATTERN = "dd/MM/yyyy HH:mm" ;
+    private static final String DATE_TIME_FORMAT = "dd-MM-yyyy HH:mm" ;
+
+    public static final String EMAIL_REGEX = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\."
+            + "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
+            + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z0-9]"
+            + "(?:[A-Za-z0-9-]*[A-Za-z0-9])?";
+
+    public static final String DATE_REGEX = "^((0[1-9])|([12][0-9])|(3[01]))-((0[1-9])|1[012])-\\d\\d\\d\\d";
 
     public static Timestamp strToTimeStamp(String dateStr){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
         try {
             return Timestamp.valueOf(LocalDateTime.from(formatter.parse(dateStr)));
         }
@@ -26,21 +42,40 @@ public class CommonUtils {
     }
 
     public static String timeStampToStr(Timestamp date){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
         return formatter.format(date.toLocalDateTime());
     }
 
     public static String getCurrentDateTime(){
-        SimpleDateFormat formatter = new SimpleDateFormat(PATTERN);
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_TIME_FORMAT);
         return formatter.format(new Date());
     }
 
-    public static boolean checkPastDate(String slotDateTime) throws PastDateTimeException {
+    public static boolean checkPastDateTime(String slotDateTime) throws PastDateTimeException {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Timestamp timestamp = CommonUtils.strToTimeStamp(slotDateTime);
         if (!timestamp.before(now) || timestamp.after(now))
             return false;
 
-        throw new PastDateTimeException("Specify a valid date-time.");
+        throw new PastDateTimeException("Specify a date-time in present or future.");
+    }
+
+    public static boolean checkPastDate(String date) throws PastDateTimeException {
+        Date currDate = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+        try {
+            final Date parseDate = formatter.parse(date);
+            if(DateUtils.isSameDay(parseDate,currDate) || parseDate.after(currDate)){
+                return true;
+            }
+            throw new PastDateTimeException("Specify a date in present or future.");
+        } catch (ParseException e) {
+            throw new InvalidDateException("Specify a valid date");
+        }
+    }
+
+    public static Timestamp getEndDateTime(Timestamp timestampOld) {
+        ZonedDateTime zonedDateTime = timestampOld.toInstant().atZone(ZoneId.of("Asia/Kolkata"));
+        return Timestamp.from(zonedDateTime.plus(1, ChronoUnit.HOURS).toInstant());
     }
 }

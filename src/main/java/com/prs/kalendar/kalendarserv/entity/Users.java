@@ -1,5 +1,6 @@
 package com.prs.kalendar.kalendarserv.entity;
 
+import com.prs.kalendar.kalendarserv.model.SlotVO;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -29,9 +30,11 @@ public class Users {
             + "(?:[A-Za-z0-9-]*[A-Za-z0-9])?")
     @Column(name = "email_id", updatable = true, nullable = false)
     private String emailId;
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id")
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL)
     private Set<Slot> slots = new HashSet<>();
+
+    @OneToMany(mappedBy = "users")
+    private Set<SlotsBooked> slotsBookeds = new HashSet<>();
 
     public UUID getId() {
         return id;
@@ -86,5 +89,21 @@ public class Users {
 
     public void setSlots(Set<Slot> slots) {
         this.slots = slots;
+    }
+
+    public Set<SlotsBooked> getSlotsBookeds() {
+        return slotsBookeds;
+    }
+
+    public void setSlotsBookeds(Set<SlotsBooked> slotsBookeds) {
+        this.slotsBookeds = slotsBookeds;
+    }
+
+    public void addSlots(Set<SlotVO> slotVOs) {
+        for(SlotVO slotVO : slotVOs){
+            Slot slot = new Slot(slotVO.getSlotDateTime());
+            slots.add(slot);
+            slot.setUsers(this);
+        }
     }
 }
