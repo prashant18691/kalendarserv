@@ -3,7 +3,7 @@
 
 A time-management and scheduling calendar service built with Spring Boot & JPA(Hibernate) & google calendar events sync.
 
-The application is deployed at https://kalendarserv.herokuapp.com. 
+The application is deployed at https://kalendarserv.herokuapp.com . 
 
 # Steps to follow
 
@@ -11,5 +11,5 @@ The application is deployed at https://kalendarserv.herokuapp.com.
 
 2. Operations
 
- [Register User]
+* POST  [Register User]  https://kalendarserv.herokuapp.com/users/register
 
