@@ -73,7 +73,7 @@ public class CommonUtils {
     }
 
     public static Timestamp getEndDateTime(Timestamp timestampOld) {
-        ZonedDateTime zonedDateTime = timestampOld.toInstant().atZone(ZoneId.of("Asia/Kolkata"));
+        ZonedDateTime zonedDateTime = timestampOld.toInstant().atZone(ZoneId.of(getTimezone()));
         return Timestamp.from(zonedDateTime.plus(1, ChronoUnit.HOURS).toInstant());
     }
 
@@ -93,5 +93,10 @@ public class CommonUtils {
     public static DateTime convertStrToIsoDateFormat(String dateStr){
         Timestamp timestamp = strToTimeStamp(dateStr);
         return new DateTime(timestamp);
+    }
+    
+    public static String getTimezone(){
+        ZonedDateTime now = ZonedDateTime.now();
+        return now.getZone().getId();
     }
 }
