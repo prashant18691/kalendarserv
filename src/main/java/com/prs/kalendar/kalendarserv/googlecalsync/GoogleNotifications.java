@@ -126,13 +126,13 @@ public class GoogleNotifications {
 
         EventDateTime start = new EventDateTime()
                 .setDateTime(startDateTime)
-                .setTimeZone("Asia/Kolkata");
+                .setTimeZone(CommonUtils.getTimezone());
         event.setStart(start);
         logger.info("start date time : "+start.toString());
         DateTime endDateTime = CommonUtils.convertStrToIsoDateFormat(slotBookedVO.getEndDateTime());
         EventDateTime end = new EventDateTime()
                 .setDateTime(endDateTime)
-                .setTimeZone("Asia/Kolkata");
+                .setTimeZone(CommonUtils.getTimezone());
         event.setEnd(end);
         logger.info("end date time : "+end.toString());
 
