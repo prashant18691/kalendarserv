@@ -1,5 +1,6 @@
 package com.prs.kalendar.kalendarserv.util;
 
+import com.google.api.client.util.DateTime;
 import com.prs.kalendar.kalendarserv.exception.custom.InvalidDateException;
 import com.prs.kalendar.kalendarserv.exception.custom.PastDateTimeException;
 import org.apache.commons.lang3.time.DateUtils;
@@ -17,11 +18,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 public class CommonUtils {
-
-    //yyyy-MM-dd'T'HH:mm:ssZ
-    /*Date date = new Date();
-    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-    String dateAsISOString = df.format(date);*/
 
     private static final String DATE_TIME_FORMAT = "dd-MM-yyyy HH:mm" ;
 
@@ -86,12 +82,16 @@ public class CommonUtils {
     }
 
     public static Date getDateFromStr(String date) {
-        date=date+" 00:00";
         DateFormat formatter = new SimpleDateFormat(DATE_TIME_FORMAT);
         try {
             return formatter.parse(date);
         } catch (ParseException e) {
             throw new InvalidDateException("Specify a valid date in the format dd-MM-yyyy");
         }
+    }
+
+    public static DateTime convertStrToIsoDateFormat(String dateStr){
+        Timestamp timestamp = strToTimeStamp(dateStr);
+        return new DateTime(timestamp);
     }
 }

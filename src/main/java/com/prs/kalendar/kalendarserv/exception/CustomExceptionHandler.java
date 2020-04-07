@@ -62,4 +62,25 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
                 request.getDescription(false));
         return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(GoogleAuthorizationException.class)
+    public final ResponseEntity<Object> handleGoogleAuthorizationException(GoogleAuthorizationException ex, WebRequest request) throws Exception {
+        ExceptionResponse exceptionResponse = new ExceptionResponse(CommonUtils.getCurrentDateTime(), ex.getMessage(),
+                request.getDescription(false));
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(SlotBookingException.class)
+    public final ResponseEntity<Object> handleSlotBookingException(SlotBookingException ex, WebRequest request) throws Exception {
+        ExceptionResponse exceptionResponse = new ExceptionResponse(CommonUtils.getCurrentDateTime(), ex.getMessage(),
+                request.getDescription(false));
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(SlotNotAvailableException.class)
+    public final ResponseEntity<Object> handleSlotNotAvailableException(SlotNotAvailableException ex, WebRequest request) throws Exception {
+        ExceptionResponse exceptionResponse = new ExceptionResponse(CommonUtils.getCurrentDateTime(), ex.getMessage(),
+                request.getDescription(false));
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);
+    }
 }

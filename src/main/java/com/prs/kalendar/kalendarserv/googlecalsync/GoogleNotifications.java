@@ -1,8 +1,8 @@
 package com.prs.kalendar.kalendarserv.googlecalsync;
 
+import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -10,110 +10,135 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
+import com.prs.kalendar.kalendarserv.exception.custom.GoogleAuthorizationException;
 import com.prs.kalendar.kalendarserv.model.SlotBookedVO;
+import com.prs.kalendar.kalendarserv.util.CommonUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
+@Controller
 public class GoogleNotifications {
 
-    private static HttpTransport httpTransport;
-
-    private static FileDataStoreFactory dataStoreFactory;
-
+    private final static Log logger = LogFactory.getLog(GoogleNotifications.class);
     private static final String APPLICATION_NAME = "Kalendar";
-
-
-    private static final java.io.File DATA_STORE_DIR =
-            new java.io.File(System.getProperty("user.home"), ".store/calendar_sample");
-
-
-    /** Global instance of the JSON factory. */
+    private static HttpTransport httpTransport;
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-
     private static com.google.api.services.calendar.Calendar client;
+    private static Map<String,Object> cache = new HashMap<>();
 
-    static {
-        try {
+    GoogleClientSecrets clientSecrets;
+    GoogleAuthorizationCodeFlow flow;
+    Credential credential;
 
-            // initialize the transport
+    @Value("${google.client.client-id}")
+    private String clientId;
+    @Value("${google.client.client-secret}")
+    private String clientSecret;
+    @Value("${google.client.redirectUri}")
+    private String redirectURI;
+
+    private  String authorize() throws Exception {
+        AuthorizationCodeRequestUrl authorizationUrl;
+        if (flow == null) {
+            GoogleClientSecrets.Details web = new GoogleClientSecrets.Details();
+            web.setClientId(clientId);
+            web.setClientSecret(clientSecret);
+            clientSecrets = new GoogleClientSecrets().setWeb(web);
             httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-            // initialize the data store factory
-            dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
-
-            // authorization
-            Credential credential = authorize();
-
-            // set up global Calendar instance
-            client = new com.google.api.services.calendar.Calendar.Builder(
-                    httpTransport, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME).build();
+            flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY, clientSecrets,
+                    Collections.singleton(CalendarScopes.CALENDAR_EVENTS)).setAccessType("offline").build();
         }
-        catch (Exception ex){
-            ex.printStackTrace();
-        }
+        authorizationUrl = flow.newAuthorizationUrl().setRedirectUri(redirectURI);
+//        System.out.println("cal authorizationUrl->" + authorizationUrl);
+        return authorizationUrl.build();
     }
 
-    /** Authorizes the installed application to access user's protected data. */
-    private static Credential authorize() throws Exception {
-        // load client secrets
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
-                new InputStreamReader(GoogleNotifications.class.getResourceAsStream("/client_secrets.json")));
 
-        // set up authorization code flow
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                httpTransport, JSON_FACTORY, clientSecrets,
-                Collections.singleton(CalendarScopes.CALENDAR_EVENTS)).setDataStoreFactory(dataStoreFactory)
-                .build();
-        LocalServerReceiver.Builder builder =  new LocalServerReceiver.Builder();
-        LocalServerReceiver localServerReceiver = builder.setHost("localhost").setPort(8080).build();
-        // authorize
-        return new AuthorizationCodeInstalledApp(flow, localServerReceiver).authorize("user");
-    }
-
-    public static void send(SlotBookedVO slotBookedVO) {
+    public void addAuthLink(SlotBookedVO slotBookedVO) {
+        logger.info("GoogleNotifications :: authorize : start");
         try {
-            Event event = createEvent(slotBookedVO);
-            addEvent(event);
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
+            cache.put("SlotBookedVO",slotBookedVO);
+            slotBookedVO.setAddToCalendar(authorize());
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            throw new GoogleAuthorizationException("Exception while creating google authorization link");
         }
-
+        logger.info("GoogleNotifications :: authorize : end");
     }
 
-    private static Event createEvent(SlotBookedVO slotBookedVO) {
+    @RequestMapping(value = "/Callback", method = RequestMethod.GET, params = "code")
+    public ResponseEntity<String> oauth2Callback(@RequestParam(value = "code") String code) {
+        logger.info("GoogleNotifications :: oauth2Callback : start");
+        String message;
+        try {
+            TokenResponse response = flow.newTokenRequest(code).setRedirectUri(redirectURI).execute();
+            credential = flow.createAndStoreCredential(response, "userID");
+            client = new com.google.api.services.calendar.Calendar.Builder(httpTransport, JSON_FACTORY, credential)
+                    .setApplicationName(APPLICATION_NAME).build();
+            Event event = createEvent();
+            if (event==null){
+               message = "No event found add to calendar";
+            }
+            else {
+                addEvent(event);
+                message = "Event added to Calendar";
+            }
+        } catch (Exception e) {
+            logger.warn("Exception while handling OAuth2 callback (" + e.getMessage() + ")."
+                    + " Redirecting to google connection status page.");
+            message = "Exception while handling OAuth2 callback (" + e.getMessage() + ")."
+                    + " Redirecting to google connection status page.";
+        }
 
+        return new ResponseEntity<>(message, HttpStatus.OK);
+    }
+
+
+    private static Event createEvent() {
+        if (cache.isEmpty() || !cache.containsKey("SlotBookedVO")) {
+            logger.warn("No event found add to calendar");
+            return null;
+        }
+        SlotBookedVO slotBookedVO = (SlotBookedVO) cache.remove("SlotBookedVO");
         Event event = new Event()
-                .setSummary("Google I/O 2015")
-                .setLocation("800 Howard St., San Francisco, CA 94103");
+                .setSummary(APPLICATION_NAME+" :: "+slotBookedVO.getBookId());
 
-        DateTime startDateTime = new DateTime("2020-04-07T09:00:00+05:30");
+        DateTime startDateTime = CommonUtils.convertStrToIsoDateFormat(slotBookedVO.getStartDateTime());
         EventDateTime start = new EventDateTime()
-                .setDateTime(startDateTime)
-                .setTimeZone("Asia/Kolkata");
+                .setDateTime(startDateTime);
         event.setStart(start);
 
-        DateTime endDateTime = new DateTime("2020-04-07T10:00:00+05:30");
+        DateTime endDateTime = CommonUtils.convertStrToIsoDateFormat(slotBookedVO.getEndDateTime());
         EventDateTime end = new EventDateTime()
-                .setDateTime(endDateTime)
-                .setTimeZone("Asia/Kolkata");
+                .setDateTime(endDateTime);
         event.setEnd(end);
 
-        /*String[] recurrence = new String[] {"RRULE:FREQ=DAILY;COUNT=2"};
-        event.setRecurrence(Arrays.asList(recurrence));*/
-
-        EventAttendee[] attendees = new EventAttendee[] {
-                new EventAttendee().setEmail("prashant18691@gmail.com"),
-                new EventAttendee().setEmail("vibhor.sunny007@gmail.com"),
-        };
+        EventAttendee[] attendees = null;
+        if (!CollectionUtils.isEmpty(slotBookedVO.getAttendees())){
+            attendees = new EventAttendee[]{
+                new EventAttendee().setEmail(slotBookedVO.getAttendees().get(0)),
+                        new EventAttendee().setEmail(slotBookedVO.getAttendees().get(1)),
+            };
+        }
         event.setAttendees(Arrays.asList(attendees));
 
         EventReminder[] reminderOverrides = new EventReminder[] {
@@ -128,7 +153,8 @@ public class GoogleNotifications {
     }
 
     private static void addEvent(Event event) throws IOException {
-        Event result = client.events().insert("primary", event).execute();
+        if (event!=null)
+            client.events().insert("primary", event).execute();
     }
 
 }
