@@ -11,17 +11,17 @@ The application is deployed at https://kalendarserv.herokuapp.com.
 
 2. Operations
 
-      *POST*        Register User        https://kalendarserv.herokuapp.com/users/register
+      *POST*              Register User            https://kalendarserv.herokuapp.com/users/register
       
-      *POST*        Get Token            https://kalendarserv.herokuapp.com/authenticate
+      *POST*              Get Token                https://kalendarserv.herokuapp.com/authenticate
       
-      *GET*         Get user by id       https://kalendarserv.herokuapp.com/users/id/{userid}
+      *GET*               Get user by id           https://kalendarserv.herokuapp.com/users/id/{userid}
       
-      *GET*         Get user by email    https://kalendarserv.herokuapp.com/users/email/{emailid}
+      *GET*               Get user by email        https://kalendarserv.herokuapp.com/users/email/{emailid}
       
-      *POST*        Add slots for user   https://kalendarserv.herokuapp.com/slots/email/{emailid}
+      *POST*              Add slots for user       https://kalendarserv.herokuapp.com/slots/email/{emailid}
       
-      *GET*         Find slots           https://kalendarserv.herokuapp.com/slots/email/{emailid}/date/{dd-MM-yyyy}
+      *GET*               Find slots               https://kalendarserv.herokuapp.com/slots/email/{emailid}/date/{dd-MM-yyyy}
       
-      *POST*        Book slot            https://kalendarserv.herokuapp.com/slots/{slotid}
+      *POST*              Book slot                https://kalendarserv.herokuapp.com/slots/{slotid}
 
