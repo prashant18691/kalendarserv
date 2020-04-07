@@ -3,7 +3,6 @@
 
 A time-management and scheduling calendar service built with Spring Boot & JPA(Hibernate) & google calendar events sync.
 
-The application is deployed at https://kalendarserv.herokuapp.com. 
 
 ## Steps to follow
 
