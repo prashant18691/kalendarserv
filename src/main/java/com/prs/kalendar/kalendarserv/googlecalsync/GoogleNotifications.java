@@ -123,14 +123,18 @@ public class GoogleNotifications {
                 .setSummary(APPLICATION_NAME+" :: "+slotBookedVO.getBookId());
 
         DateTime startDateTime = CommonUtils.convertStrToIsoDateFormat(slotBookedVO.getStartDateTime());
-        EventDateTime start = new EventDateTime()
-                .setDateTime(startDateTime);
-        event.setStart(start);
 
+        EventDateTime start = new EventDateTime()
+                .setDateTime(startDateTime)
+                .setTimeZone("Asia/Kolkata");
+        event.setStart(start);
+        logger.info("start date time : "+start.toString());
         DateTime endDateTime = CommonUtils.convertStrToIsoDateFormat(slotBookedVO.getEndDateTime());
         EventDateTime end = new EventDateTime()
-                .setDateTime(endDateTime);
+                .setDateTime(endDateTime)
+                .setTimeZone("Asia/Kolkata");
         event.setEnd(end);
+        logger.info("end date time : "+end.toString());
 
         EventAttendee[] attendees = null;
         if (!CollectionUtils.isEmpty(slotBookedVO.getAttendees())){
